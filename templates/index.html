@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A clean, lightweight Flask starter app.">
+    <title>Brightside — Flask Starter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="nav" aria-label="Primary navigation">
+        <a class="brand" href="/" aria-label="Brightside home">
+          <span class="brand-mark">B</span>
+          <span>Brightside</span>
+        </a>
+        <a class="nav-link" href="#about">About this demo</a>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="status-dot"></span> Built with Flask</p>
+            <h1 id="hero-title" aria-label="Small app. Bright ideas.">Small app.<br><span>Bright ideas.</span></h1>
+            <p class="lede">
+              A focused Flask starter with a crisp interface, sensible structure,
+              and zero database overhead.
+            </p>
+            <div class="actions">
+              <a class="button button-primary" href="#about">Explore the app <span>↗</span></a>
+              <a class="button button-secondary" href="https://flask.palletsprojects.com/" rel="noreferrer">Flask docs</a>
+            </div>
+          </div>
+
+          <div class="visual" aria-label="Application preview graphic">
+            <div class="orb orb-one"></div>
+            <div class="orb orb-two"></div>
+            <div class="code-card">
+              <div class="window-bar">
+                <span></span><span></span><span></span>
+                <small>app.py</small>
+              </div>
+              <pre><code><b>@app.get</b>(<em>"/"</em>)
+<strong>def</strong> home():
+    <strong>return</strong> render_template(
+        <em>"index.html"</em>
+    )</code></pre>
+              <div class="success-pill"><span>✓</span> Ready to ship</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="feature-grid" id="about" aria-label="App features">
+          <article>
+            <span class="feature-icon">✦</span>
+            <h2>Delightfully simple</h2>
+            <p>One route, clean templates, and no unnecessary moving parts.</p>
+          </article>
+          <article>
+            <span class="feature-icon">◫</span>
+            <h2>Responsive by default</h2>
+            <p>A polished layout that feels at home on every screen size.</p>
+          </article>
+          <article>
+            <span class="feature-icon">→</span>
+            <h2>Deployment ready</h2>
+            <p>A WSGI entry point and pinned dependencies make shipping easy.</p>
+          </article>
+        </section>
+      </main>
+
+      <footer>
+        <span>Brightside / Flask demo</span>
+        <span>Simple on purpose.</span>
+      </footer>
+    </div>
+  </body>
+</html>
