@@ -130,7 +130,7 @@ h1 span { color: var(--green); }
 .visual { position: relative; min-height: 390px; display: grid; place-items: center; }
 
 .orb { position: absolute; border-radius: 50%; filter: blur(1px); }
-.orb-one { width: 330px; height: 330px; background: var(--lime); opacity: 0.65; }
+.orb-one { width: min(330px, 100%); aspect-ratio: 1; background: var(--lime); opacity: 0.65; }
 .orb-two { width: 210px; height: 210px; top: 15px; right: 5px; background: #f6bb79; opacity: 0.48; }
 
 .code-card {
