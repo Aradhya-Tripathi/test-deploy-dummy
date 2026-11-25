@@ -3,76 +3,160 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A clean, lightweight Flask starter app.">
-    <title>Brightside — Flask Starter</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="description" content="A live view of the release served by Frappe Cloud Push to Deploy.">
+    <title>Push to Deploy — Frappe Cloud demo</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171717'/%3E%3Cpath d='M11 9h11v3.5h-7v3h6v3.5h-6V24h-4z' fill='white'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/app.css') }}">
   </head>
-  <body>
-    <div class="page-shell">
+  <body data-slot="{{ info.slot }}">
+    <div class="release-banner" hidden>
+      <span class="live-dot"></span>
+      <span>New release live: <code>{{ info.build.commit[:7] }}</code> → <code data-field="new-commit"></code></span>
+      <a class="banner-button" href="/">Reload</a>
+    </div>
+    <div class="page" data-info='{{ info | tojson }}'>
       <header class="nav" aria-label="Primary navigation">
-        <a class="brand" href="/" aria-label="Brightside home">
-          <span class="brand-mark">B</span>
-          <span>Brightside</span>
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">F</span>
+          <span>Frappe Cloud</span>
+          <span class="badge">Push to Deploy</span>
         </a>
-        <a class="nav-link" href="#about">About this demo</a>
+        <nav class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#vm">Inside the VM</a>
+          <a href="#image">The image</a>
+          <a class="nav-code" href="/api/info">/api/info</a>
+        </nav>
       </header>
 
       <main>
         <section class="hero" aria-labelledby="hero-title">
-          <div class="hero-copy">
-            <p class="eyebrow"><span class="status-dot"></span> Built with Flask</p>
-            <h1 id="hero-title" aria-label="Small app. Bright ideas.">Small app.<br><span>Bright ideas.</span></h1>
+          <div>
+            <p class="eyebrow"><span class="live-dot"></span> Live demo</p>
+            <h1 id="hero-title">git push.<br><span>It's live.</span></h1>
             <p class="lede">
-              A focused Flask starter with a crisp interface, sensible structure,
-              and zero database overhead.
+              This app has no deploy script. Every commit to <code>main</code> is built on its own VM, gated on its tests, and swapped in with zero downtime by Frappe Cloud. The card shows the release answering you right now.
             </p>
             <div class="actions">
-              <a class="button button-primary" href="#about">Explore the app <span>↗</span></a>
-              <a class="button button-secondary" href="https://flask.palletsprojects.com/" rel="noreferrer">Flask docs</a>
+              <a class="button button-primary" href="#how">See how it works</a>
+              <a class="button" href="/health">Health check</a>
             </div>
           </div>
 
-          <div class="visual" aria-label="Application preview graphic">
-            <div class="orb orb-one"></div>
-            <div class="orb orb-two"></div>
-            <div class="code-card">
-              <div class="window-bar">
-                <span></span><span></span><span></span>
-                <small>app.py</small>
+          <aside class="release-card" aria-label="Live release">
+            <div class="card-head">
+              <span>Live release</span>
+              <span class="pill"><span class="live-dot"></span> Serving</span>
+            </div>
+            <dl class="facts">
+              <div><dt>Commit</dt><dd><code>{{ info.build.commit[:12] }}</code></dd></div>
+              <div><dt>Built</dt><dd><time data-field="built-at" datetime="{{ info.build.built_at or '' }}">{{ info.build.built_at or "locally" }}</time></dd></div>
+              <div><dt>Uptime</dt><dd data-field="uptime">{{ info.uptime_seconds }}s</dd></div>
+              <div><dt>Container</dt><dd><code data-field="hostname">{{ info.hostname }}</code></dd></div>
+              <div><dt>Runtime</dt><dd>Python {{ info.python }} · pid <span data-field="pid">{{ info.pid }}</span></dd></div>
+            </dl>
+            <div class="slot-switch" aria-label="Live slot">
+              <span class="slot-option" data-slot-option="blue"><i></i>blue <small>:8001</small></span>
+              <span class="slot-option" data-slot-option="green"><i></i>green <small>:8002</small></span>
+            </div>
+            <p class="card-foot">Polling <code>/api/info</code> every 4 s<span class="offline-note"></span></p>
+          </aside>
+        </section>
+
+        <section class="section" id="how" aria-labelledby="how-title">
+          <p class="section-kicker">How it works</p>
+          <h2 id="how-title">From <code>git push</code> to traffic in five steps</h2>
+          <ol class="steps">
+            <li>
+              <span class="step-number">1</span>
+              <h3>Push</h3>
+              <p>A commit lands on the tracked branch. GitHub tells Central.</p>
+              <code>git push origin main</code>
+            </li>
+            <li>
+              <span class="step-number">2</span>
+              <h3>Queue</h3>
+              <p>Central records a Deploy Request. A newer push cancels the older build.</p>
+              <code>Deploy Request</code>
+            </li>
+            <li>
+              <span class="step-number">3</span>
+              <h3>Build</h3>
+              <p>The VM's agent picks it up, fetches only that commit, and builds the Dockerfile.</p>
+              <code>buildah build --layers</code>
+            </li>
+            <li>
+              <span class="step-number">4</span>
+              <h3>Release</h3>
+              <p>The image starts in the idle slot and must pass the health check and stay up.</p>
+              <code>GET /health</code>
+            </li>
+            <li>
+              <span class="step-number">5</span>
+              <h3>Switch</h3>
+              <p>nginx points at the new slot, then the old one stops. A failure changes nothing.</p>
+              <code>upstream.conf</code>
+            </li>
+          </ol>
+        </section>
+
+        <section class="section" id="vm" aria-labelledby="vm-title">
+          <p class="section-kicker">Inside the VM</p>
+          <h2 id="vm-title">Blue/green on a single machine</h2>
+          <p class="section-lede">Central never connects to the VM. The agent asks for work, reports logs, and owns the switch. The highlighted slot is the one serving this page.</p>
+          <div class="diagram" role="img" aria-label="Regional proxy to nginx to blue and green app slots">
+            <div class="node node-edge">
+              <strong>Regional proxy</strong>
+              <span>TLS · your domain</span>
+            </div>
+            <div class="link"><span>:80</span></div>
+            <div class="vm">
+              <span class="vm-label">VM</span>
+              <div class="node">
+                <strong>nginx</strong>
+                <span>upstream → live slot</span>
               </div>
-              <pre><code><b>@app.get</b>(<em>"/"</em>)
-<strong>def</strong> home():
-    <strong>return</strong> render_template(
-        <em>"index.html"</em>
-    )</code></pre>
-              <div class="success-pill"><span>✓</span> Ready to ship</div>
+              <div class="fork"></div>
+              <div class="slots">
+                <div class="node slot" data-slot-node="blue">
+                  <strong>app@blue</strong>
+                  <span>127.0.0.1:8001</span>
+                  <em class="slot-state"></em>
+                </div>
+                <div class="node slot" data-slot-node="green">
+                  <strong>app@green</strong>
+                  <span>127.0.0.1:8002</span>
+                  <em class="slot-state"></em>
+                </div>
+              </div>
+              <div class="vm-services">
+                <span><b>deploy-agent.timer</b> asks Central for work every 10–20 s</span>
+                <span><b>podman</b> runs each slot from <code>app:&lt;commit&gt;</code></span>
+                <span><b>metadata-block</b> keeps containers off the cloud metadata API</span>
+              </div>
             </div>
           </div>
         </section>
 
-        <section class="feature-grid" id="about" aria-label="App features">
-          <article>
-            <span class="feature-icon">✦</span>
-            <h2>Delightfully simple</h2>
-            <p>One route, clean templates, and no unnecessary moving parts.</p>
-          </article>
-          <article>
-            <span class="feature-icon">◫</span>
-            <h2>Responsive by default</h2>
-            <p>A polished layout that feels at home on every screen size.</p>
-          </article>
-          <article>
-            <span class="feature-icon">→</span>
-            <h2>Deployment ready</h2>
-            <p>A WSGI entry point and pinned dependencies make shipping easy.</p>
-          </article>
+        <section class="section" id="image" aria-labelledby="image-title">
+          <p class="section-kicker">The image</p>
+          <h2 id="image-title">A five-stage Dockerfile</h2>
+          <p class="section-lede">Only the last stage ships. The others build assets, resolve dependencies, and refuse to produce an image when a test fails.</p>
+          <ol class="stages">
+            <li><code>assets</code><span>node:22-alpine</span><p>npm ci with a cache mount, esbuild bundles and minifies the CSS and JS.</p></li>
+            <li><code>deps</code><span>python:3.12-slim</span><p>uv resolves Flask and gunicorn into a self-contained virtualenv.</p></li>
+            <li><code>test</code><span>pytest gate</span><p>Runs the suite against the built assets. A failing test fails the build, so nothing is released.</p></li>
+            <li><code>meta</code><span>busybox</span><p>Reads the detached <code>.git/HEAD</code> and stamps the commit and build time you see above.</p></li>
+            <li><code>runtime</code><span>slim · non-root</span><p>Venv, templates, and assets only. Runs gunicorn as uid 10001 on <code>$PORT</code>.</p></li>
+          </ol>
         </section>
       </main>
 
       <footer>
-        <span>Brightside / Flask demo</span>
-        <span>Simple on purpose.</span>
+        <span>Push to Deploy demo · Frappe Cloud</span>
+        <span>Served from the <b data-field="slot">{{ info.slot }}</b> slot</span>
       </footer>
     </div>
+    <script src="{{ url_for('static', filename='dist/app.js') }}" defer></script>
   </body>
 </html>

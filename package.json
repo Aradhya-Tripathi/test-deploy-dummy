@@ -1,0 +1,10 @@
+{
+  "name": "brightside-assets",
+  "private": true,
+  "scripts": {
+    "build": "esbuild frontend/main.js --bundle --minify --sourcemap --target=es2020 --outdir=static/dist --entry-names=app"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
